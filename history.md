@@ -35,5 +35,16 @@ This file serves as a checkpoint summarizing the progress and context for the Ca
 - Note: the image has no default `MODEL_PATH`; it must be passed with `-e MODEL_PATH=/app/models/<version>.joblib -e MODEL_VERSION=<version>`.
 - CI has successfully run on GitHub Actions and the image `ghcr.io/amodh-saxena/canaryml` is pushed to the container registry.
 
+### Phase 3: Cluster and Platform Setup (Completed)
+- Started `kind` cluster with Ingress port mappings.
+- Installed `ingress-nginx`, `argo-rollouts`, and `kube-prometheus-stack`.
+
+### Phase 4: Deploy v1 as stable (Completed)
+- Created K8s manifests for Namespace, Services, Ingress, ServiceMonitor, and Rollout (v1).
+- Validated manifests via `kubeconform` and `kubectl apply --dry-run=server`.
+- Loaded `canaryml:v1` Docker image into `kind`.
+- Applied manifests; Rollout became healthy and stable.
+- `GET /healthz` and `POST /predict` successfully verified via the Ingress (`localhost:80`).
+
 ## Next Steps
-- **Phase 3:** Cluster and platform setup (create the `kind` cluster with ingress mappings, install ingress-nginx, Argo Rollouts, and kube-prometheus-stack).
+- **Phase 5:** Analysis and canary (write `analysis-template.yaml` using Prometheus gates, add canary steps to Rollout, validate, and test by releasing `v3-good`).
