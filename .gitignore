@@ -1,0 +1,17 @@
+# Project-local tool binaries (re-create with scripts/install-tools.sh)
+bin/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Generated model files (report.json is committed)
+models/*.joblib
+
+# Secrets / local env
+.env
+*.pem
+kubeconfig*

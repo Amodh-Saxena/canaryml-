@@ -1,0 +1,7 @@
+# Runtime dependencies (installed in the Docker image).
+# Versions looked up on PyPI 2026-10-05; see VERSIONS.md.
+fastapi==0.142.2
+uvicorn==0.54.0
+scikit-learn==1.9.1
+joblib==1.6.0
+prometheus-client==0.26.0
