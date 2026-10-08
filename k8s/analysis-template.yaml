@@ -1,0 +1,100 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: canaryml-gates
+  namespace: canaryml
+
+spec:
+  args:
+  - name: podTemplateHashValue
+
+  metrics:
+
+  # ─────────────────────────────────────────────
+  # 1. CANARY ACCURACY
+  # ─────────────────────────────────────────────
+  - name: canary-accuracy
+    initialDelay: 30s
+    interval: 10s
+    count: 3
+    failureLimit: 1
+
+    successCondition: result[0] >= 0.85
+    failureCondition: result[0] < 0.85
+
+    provider:
+      prometheus:
+        address: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+
+        query: |
+          sum(
+            increase(model_predictions_total{
+              correct="true",
+              rollouts_pod_template_hash="{{args.podTemplateHashValue}}"
+            }[2m])
+          )
+          /
+          sum(
+            increase(model_predictions_total{
+              rollouts_pod_template_hash="{{args.podTemplateHashValue}}"
+            }[2m])
+          )
+
+  # ─────────────────────────────────────────────
+  # 2. P95 LATENCY
+  # ─────────────────────────────────────────────
+  - name: canary-p95-latency
+    initialDelay: 30s
+    interval: 10s
+    count: 3
+    failureLimit: 1
+
+    successCondition: result[0] < 0.300
+    failureCondition: result[0] >= 0.300
+
+    provider:
+      prometheus:
+        address: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+
+        query: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(http_request_duration_seconds_bucket{
+                rollouts_pod_template_hash="{{args.podTemplateHashValue}}"
+              }[2m])
+            )
+          )
+
+  # ─────────────────────────────────────────────
+  # 3. CANARY ERROR RATE
+  # ─────────────────────────────────────────────
+  - name: canary-error-rate
+    initialDelay: 30s
+    interval: 10s
+    count: 3
+    failureLimit: 1
+
+    successCondition: result[0] < 0.02
+    failureCondition: result[0] >= 0.02
+
+    provider:
+      prometheus:
+        address: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+
+        query: |
+          (
+            sum(
+              rate(http_requests_total{
+                status=~"5..",
+                rollouts_pod_template_hash="{{args.podTemplateHashValue}}"
+              }[2m])
+            )
+            or vector(0)
+          )
+          /
+          sum(
+            rate(http_requests_total{
+              rollouts_pod_template_hash="{{args.podTemplateHashValue}}"
+            }[2m])
+          )

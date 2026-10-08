@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: canaryml-monitor
+  namespace: canaryml
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: canaryml
+  namespaceSelector:
+    matchNames:
+      - canaryml
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 5s
+  podTargetLabels:
+  - rollouts-pod-template-hash
